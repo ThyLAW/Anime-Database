@@ -1,3 +1,6 @@
+-- AnimeDatabase : LOGAN WHITE : CIST 1307 : PROFESSOR ELLISON
+
+
 use master;
 go
 --drops the animelist database if it exists
@@ -10,7 +13,7 @@ use AnimeList;
 go
 
 -- change the owner of the database to a local account so we can create diagrams
-EXEC dbo.sp_changedbowner @loginame = N'sa', @map = false 
+EXEC dbo.sp_changedbowner @loginame = N'sa', @map = false ;
 
 --creates all of the tables in the database, including linking tables
 
@@ -39,16 +42,19 @@ genreName nvarchar(25) not null
 );
 
 create table AnimeList(
+listId int identity(1000,1) primary key,
 userId int references Users(userId),
 animeId int references Anime(animeId)
 );
 
 create table AnimeProducer(
+animeProducerId int identity(1000,1) primary key,
 producerId int references Producer(producerId),
 animeId int references Anime(animeId)
 );
 
 create table AnimeGenre(
+animeGenreId int identity(1000,1) primary key,
 animeId int references Anime(animeId),
 genreId int references Genre(genreId)
 );
@@ -62,26 +68,6 @@ create unique index genre_genrename on Genre(genreName);
 create index anime_sourcematerial on Anime(sourceMaterial);
 create index anime_episodecount on Anime(episodeCount);
 
-go
--- create a view
-create VIEW  animeListView
-AS
-SELECT        TOP (100) PERCENT dbo.Anime.animeId, dbo.Anime.title, dbo.Users.userId, dbo.Users.userName
-FROM          dbo.Anime CROSS JOIN
-                         dbo.Users
-GROUP BY dbo.Anime.animeId, dbo.Anime.title, dbo.Users.userId, dbo.Users.userName
-ORDER BY dbo.Anime.animeId DESC;
-
-go
-
---Stored Procedure (gets anime by anime id)
-
-CREATE PROCEDURE getAnimeForUser
-AS
-select	al.userId, a.animeId, a.title
-from  AnimeList al right join Anime a on al.animeId = a.animeId
-where al.userId = 1;
-GO
 
 -- Insert data into users table
 insert into Users(userName, dateOfBirth, gender) values('LAW175', '1999-10-06', 'M');
@@ -114,8 +100,6 @@ insert into Genre(genreName) values('Action');
 -- insert data into linking tables
 
 -- animelist table
-select * from Anime
-select * from Users
 insert into AnimeList(userId, animeId) values(0, 100);
 insert into AnimeList(userId, animeId) values(0, 101);
 insert into AnimeList(userId, animeId) values(0, 102);
@@ -148,3 +132,102 @@ insert into AnimeGenre(genreId, animeId) values(104, 103);
 insert into AnimeGenre(genreId, animeId) values(103, 103);
 insert into AnimeGenre(genreId, animeId) values(104, 104);
 insert into AnimeGenre(genreId, animeId) values(103, 104);
+
+go
+
+
+-- VIEWS
+
+-- VIEW 1| shows anime title and linked to a user with their ids
+create VIEW  animeListView
+AS
+SELECT        TOP (100) PERCENT dbo.Anime.animeId, dbo.Anime.title, dbo.Users.userId, dbo.Users.userName
+FROM          dbo.Anime CROSS JOIN
+                         dbo.Users
+GROUP BY dbo.Anime.animeId, dbo.Anime.title, dbo.Users.userId, dbo.Users.userName
+ORDER BY dbo.Anime.animeId DESC;
+
+go
+select * from animeListView;
+go
+-- VIEW 2
+create VIEW animeByProducer
+as
+SELECT        TOP (100) PERCENT dbo.Producer.producerName, dbo.Anime.title
+FROM            dbo.Anime INNER JOIN
+                         dbo.AnimeProducer ON dbo.Anime.animeId = dbo.AnimeProducer.animeId INNER JOIN
+                         dbo.Producer ON dbo.AnimeProducer.producerId = dbo.Producer.producerId
+GROUP BY dbo.Anime.title, dbo.Producer.producerName
+ORDER BY dbo.Producer.producerName;
+go
+select * from animeByProducer;
+go
+-- VIEW 3 gets anime by its genre
+
+create VIEW animeByGenre
+as
+SELECT        TOP (100) PERCENT dbo.Anime.title, dbo.Genre.genreName
+FROM            dbo.Anime INNER JOIN
+                         dbo.AnimeGenre ON dbo.Anime.animeId = dbo.AnimeGenre.animeId INNER JOIN
+                         dbo.Genre ON dbo.AnimeGenre.genreId = dbo.Genre.genreId
+ORDER BY dbo.Genre.genreName;
+go
+select * from animeByGenre;
+
+-- STORED PROCEDURES
+
+--Stored Procedure 1 gets anime based on userid
+GO
+CREATE PROCEDURE getAnimeForUser2 @UserId int
+AS
+select	al.userId, a.animeId, a.title
+from  AnimeList al right join Anime a on al.animeId = a.animeId
+where al.userId = @UserId;
+GO
+
+-- demonstrates it works
+Exec getAnimeForUser2 @UserId = 3;
+go
+
+
+
+
+-- stored procedure 2 adds a user to database
+
+CREATE PROCEDURE insertUser 
+@userName nvarchar(25),
+@dateOfBirth date,
+@gender char(1)
+AS
+BEGIN
+     SET NOCOUNT ON;
+
+    -- Inserts the data
+INSERT INTO Users
+(userName, dateOfBirth, gender)
+VALUES
+(@userName, @dateOfBirth, @gender)
+END
+go
+
+Exec insertUser @userName = 'test123', @dateOfBirth = '1993-10-10', @gender = 'F';
+
+--displays that it works
+select * 
+from users
+where userName = 'test123';
+
+
+
+-- Stored Procedure 3 gets how many times an anime has been watched
+go
+
+Create procedure getAnimeCount 
+as
+select Anime.title, count(animelist.animeId) as 'Number of times watched'
+from AnimeList join Anime on AnimeList.animeId = Anime.animeId
+group by anime.title
+order by [Number of times watched] DESC;
+go
+
+exec getAnimeCount;
