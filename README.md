@@ -11,10 +11,10 @@ Simply run the .sql script inside of SQL Server.
 ## Diagrams
 
 **Conceptual Model**
-![conceptual](ConceptualModelAnimeDatabase.png)
+![conceptual](./images/ConceptualModelAnimeDatabase.png)
 
 **Logical Model**
-![logic](AnimeDatabaseLogicalModel.png)
+![logic](./images/AnimeDatabaseLogicalModel.png)
 
 
 ## Business Logic
