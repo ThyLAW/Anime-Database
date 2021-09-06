@@ -21,7 +21,7 @@ Simply run the .sql script inside of SQL Server.
 
 Anime Database Business Rules
 
-1.A user is someone who creates an account on the website.
+1. A user is someone who creates an account on the website.
 2. Anime are Japanese Animated shows.
 3. A genre is an identifier of how anime may have similarities in form and style.
 4. A producer is a franchise, company, business, or individual, etc. that produces an anime.
